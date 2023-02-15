@@ -2,10 +2,20 @@ import SwiftUI
 
 struct ContentView: View {
     @Queryable<Bool> var queryable
+    @State var isShowingInnerView: Bool = false
 
     var body: some View {
-        Button("Query") {
-            query()
+        NavigationStack {
+            VStack {
+                Button("Query") {
+                    query()
+                }
+                NavigationLink {
+                    InnerView(queryable: queryable)
+                } label: {
+                    Text("Show Inner View")
+                }
+            }
         }
         .queryableSheet(controlledBy: queryable) { query in
             SheetView {
@@ -26,9 +36,29 @@ struct ContentView: View {
     }
 }
 
-struct SheetView: View {
+struct InnerView: View {
+    var queryable: Queryable<Bool>.Trigger
 
-    @Queryable<Bool> var otherQueryable
+    var body: some View {
+        Button("Query from here") {
+            query()
+        }
+    }
+
+    func query() {
+        Task {
+            do {
+                let result = try await queryable.query()
+                print("Inner result: \(result)")
+            } catch {
+                print("Inner error: \(error)")
+            }
+        }
+    }
+}
+
+
+struct SheetView: View {
     let completion: () -> Void
 
     var body: some View {
